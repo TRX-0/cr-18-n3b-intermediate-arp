@@ -22,7 +22,7 @@
       ansible.builtin.user:
         name: "{{ ftp_user }}"
         password: "{{ ftp_pass | password_hash('sha512') }}"
-        shell: /usr/sbin/nologin
+        shell: /bin/bash
         create_home: true
         home: "{{ ftp_home }}"
 
