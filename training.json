@@ -19,7 +19,7 @@
       "order": 0,
       "estimated_duration": 0,
       "minimal_possible_solve_time": null,
-      "content": "## Scenario\n\nA small office LAN. Three machines on it:\n\n- **vm1** at `192.168.25.10` runs an FTP server.\n- **vm2** at `192.168.25.20` is a user workstation. Someone here has scripted a periodic FTP login to vm1 and never noticed that FTP credentials cross the wire in cleartext.\n- **vma** at `192.168.25.30` is your attacker workstation.\n\n## What you will do\n\n1. Get on the path between vm1 and vm2 by poisoning the ARP caches on both ends.\n2. Forward the traffic so the FTP session still completes (otherwise vm2 will notice).\n3. Read the username and password off the wire.\n4. Log in to the FTP server yourself with those credentials and download the flag.\n\nThe flag will look like `CADMUS{...}`. You submit only the value **inside** the braces."
+      "content": "## Scenario\n\nA small office LAN. Three machines on it:\n\n- **vm1** at `192.168.25.10` runs an FTP server.\n- **vm2** at `192.168.25.20` is a user workstation. Someone here has scripted a periodic FTP login to vm1 and never noticed that FTP credentials cross the wire in cleartext.\n- **vma** at `192.168.25.30` is your attacker workstation.\n\n## What you will do\n\n1. Get on the path between vm1 and vm2 by poisoning the ARP caches on both ends.\n2. Forward the traffic so the FTP session still completes (otherwise vm2 will notice).\n3. Read the username and password off the wire.\n4. Log in to the FTP server yourself with those credentials and download the flag.\n\nSubmit the flag verbatim as you read it."
     },
     {
       "title": "Get Access",
@@ -87,8 +87,8 @@
       "minimal_possible_solve_time": 2,
       "answer": null,
       "answer_variable_name": "flag",
-      "content": "You have the password. Now log in to the FTP server yourself and retrieve the flag.\n\nThe flag lives in a file called `flag.txt` in the FTP user's home directory. The captured line will look like `CADMUS{...}`; submit only the value **inside** the braces.\n\nYou may stop the arpspoof processes now if you want; you no longer need the MITM.",
-      "solution": "1. The username you saw on the wire was **${ftp_user}**. Connect to vm1 with a real FTP client:\n\n   `ftp 192.168.25.10`\n\n   It will prompt for a name and password. Use **${ftp_user}** and the password you captured.\n\n2. List the home directory:\n\n   `ls`\n\n   You should see `flag.txt`.\n\n3. Download it:\n\n   `get flag.txt`\n\n   The file lands in your current working directory on vma. Quit with `bye`.\n\n4. Read it:\n\n   `cat flag.txt`\n\n   The contents look like **`CADMUS{${ANSWER}}`**. Submit just **`${ANSWER}`**.",
+      "content": "You have the password. Now log in to the FTP server yourself and retrieve the flag.\n\nThe flag lives in a file called `flag.txt` in the FTP user's home directory. Submit the file contents verbatim.\n\nYou may stop the arpspoof processes now if you want; you no longer need the MITM.",
+      "solution": "1. The username you saw on the wire was **${ftp_user}**. Connect to vm1 with a real FTP client:\n\n   `ftp 192.168.25.10`\n\n   It will prompt for a name and password. Use **${ftp_user}** and the password you captured.\n\n2. List the home directory:\n\n   `ls`\n\n   You should see `flag.txt`.\n\n3. Download it:\n\n   `get flag.txt`\n\n   The file lands in your current working directory on vma. Quit with `bye`.\n\n4. Read it:\n\n   `cat flag.txt`\n\n   Submit the contents as-is: **`${ANSWER}`**.",
       "solution_penalized": true,
       "hints": [
         {
