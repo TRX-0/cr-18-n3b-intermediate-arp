@@ -1,0 +1,145 @@
+# ─────────────────────────────────────────────
+#  vm1 - FTP server holding the flag
+# ─────────────────────────────────────────────
+- name: configure FTP server vm1
+  hosts:
+    - vm1
+  become: true
+
+  vars:
+    ftp_home: "/home/{{ ftp_user }}"
+    flag_file: "{{ ftp_home }}/flag.txt"
+
+  tasks:
+    - name: Install vsftpd
+      ansible.builtin.apt:
+        name: vsftpd
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Create FTP user
+      ansible.builtin.user:
+        name: "{{ ftp_user }}"
+        password: "{{ ftp_pass | password_hash('sha512') }}"
+        shell: /usr/sbin/nologin
+        create_home: true
+        home: "{{ ftp_home }}"
+
+    - name: Deploy flag file in FTP user's home
+      ansible.builtin.copy:
+        dest: "{{ flag_file }}"
+        content: "CADMUS{{ '{' }}{{ flag }}{{ '}' }}\n"
+        owner: "{{ ftp_user }}"
+        group: "{{ ftp_user }}"
+        mode: '0640'
+
+    - name: Configure vsftpd
+      ansible.builtin.copy:
+        dest: /etc/vsftpd.conf
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          listen=YES
+          listen_ipv6=NO
+          anonymous_enable=NO
+          local_enable=YES
+          write_enable=NO
+          local_umask=022
+          dirmessage_enable=YES
+          use_localtime=YES
+          xferlog_enable=YES
+          connect_from_port_20=YES
+          secure_chroot_dir=/var/run/vsftpd/empty
+          pam_service_name=vsftpd
+          pasv_enable=NO
+      notify: restart vsftpd
+
+    - name: Enable and start vsftpd
+      ansible.builtin.systemd:
+        name: vsftpd
+        enabled: true
+        state: started
+
+  handlers:
+    - name: restart vsftpd
+      ansible.builtin.systemd:
+        name: vsftpd
+        state: restarted
+
+
+# ─────────────────────────────────────────────
+#  vm2 - periodic FTP client (the credentials source)
+# ─────────────────────────────────────────────
+- name: configure FTP client vm2
+  hosts:
+    - vm2
+  become: true
+
+  vars:
+    server_ip: 192.168.25.10
+    ftp_port: 21
+    poll_interval_sec: 15
+
+  tasks:
+    - name: Install netcat
+      ansible.builtin.apt:
+        name: netcat-openbsd
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Deploy FTP client script
+      ansible.builtin.template:
+        src: ftp-client.sh.j2
+        dest: /usr/local/sbin/ftp-client.sh
+        owner: root
+        group: root
+        mode: '0750'
+      notify: restart ftp client timer
+
+    - name: Deploy FTP client service unit
+      ansible.builtin.template:
+        src: ftp-client.service.j2
+        dest: /etc/systemd/system/ftp-client.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Deploy FTP client timer unit
+      ansible.builtin.template:
+        src: ftp-client.timer.j2
+        dest: /etc/systemd/system/ftp-client.timer
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Enable and start FTP client timer
+      ansible.builtin.systemd:
+        name: ftp-client.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+
+  handlers:
+    - name: restart ftp client timer
+      ansible.builtin.systemd:
+        name: ftp-client.timer
+        state: restarted
+        daemon_reload: true
+
+
+# ─────────────────────────────────────────────
+#  vma - attacker workstation
+# ─────────────────────────────────────────────
+- name: provision attacker workstation vma
+  hosts:
+    - vma
+  become: true
+
+  roles:
+    - role: user-access
+      user_access_username: user
+      user_access_password: 'Password123'
+      user_access_sudo: true

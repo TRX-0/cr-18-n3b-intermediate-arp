@@ -1,0 +1,13 @@
+#!/bin/sh
+# Periodic FTP client for the intermediate ARP-poisoning lab.
+# Opens a TCP connection to the FTP server and pushes the USER/PASS sequence
+# over the wire in plaintext. We do not need the response; the point is that
+# the credentials are exposed for anyone sitting in the middle to catch.
+
+SERVER_IP="{{ server_ip }}"
+SERVER_PORT="{{ ftp_port }}"
+USERNAME="{{ ftp_user }}"
+PASSWORD="{{ ftp_pass }}"
+
+printf 'USER %s\r\nPASS %s\r\nQUIT\r\n' "$USERNAME" "$PASSWORD" | \
+    nc -w 5 -N "$SERVER_IP" "$SERVER_PORT" >/dev/null 2>&1
