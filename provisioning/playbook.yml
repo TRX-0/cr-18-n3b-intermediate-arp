@@ -138,6 +138,17 @@
     - vma
   become: true
 
+  tasks:
+    - name: Ensure ARP-attack toolset is present
+      ansible.builtin.apt:
+        name:
+          - bettercap
+          - dsniff
+          - ftp
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
   roles:
     - role: user-access
       user_access_username: user
