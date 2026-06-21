@@ -32,9 +32,17 @@
       "local_content": "This sandbox has not been validated for local-only deployment."
     },
     {
+      "title": "Background — bidirectional MITM and plaintext protocols",
+      "level_type": "INFO_LEVEL",
+      "order": 2,
+      "estimated_duration": 8,
+      "minimal_possible_solve_time": null,
+      "content": "In N3a you claimed an IP nobody owned — easy case, no competing replies, one-way spoof. Here both endpoints (vm1 and vm2) are real and actively talking. You need to sit *between* them without breaking the conversation. That changes a few things.\n\n## Bidirectional ARP poisoning\n\nFor a working MITM you have to lie to **both** sides:\n\n- vm1 must think *\"vm2 is at vma's MAC\"* → frames vm1 → vm2 land on you\n- vm2 must think *\"vm1 is at vma's MAC\"* → frames vm2 → vm1 land on you\n\nThat's two separate `arpspoof` processes running simultaneously. Together they form a full duplex MITM.\n\n## IP forwarding\n\nOnce both sides send their frames to you, your kernel's IP stack will drop them — they're destined for IPs you don't own. The session breaks; both endpoints see their packets disappearing into the void.\n\nThe fix: tell the kernel to act as a router. Forward unowned packets out toward their real destination.\n\n   `sudo sysctl -w net.ipv4.ip_forward=1`\n\nNow your kernel relays. vm1 ↔ vm2 still works, just routed through you. You sniff in the middle.\n\n## The classic pitfall: ICMP redirects\n\nLinux has a feature called **ICMP Redirect**. When the kernel forwards a packet between two hosts on the same subnet, it helpfully tells the sender *\"you don't need me, go direct to that host\"*. The sender then re-ARPs the destination, the real ARP reply wins this time, and your MITM falls apart within seconds.\n\nDisable it before you start spoofing:\n\n   `sudo sysctl -w net.ipv4.conf.all.send_redirects=0`\n\n   `sudo sysctl -w net.ipv4.conf.eth1.send_redirects=0`\n\nThis is the single most common reason a textbook ARP MITM doesn't work in practice. The spoof appears to be active, then mysteriously stops capturing traffic after a few seconds.\n\n## Why FTP is the natural target\n\nThe File Transfer Protocol (RFC 959, 1985) sends usernames and passwords in **plain ASCII** on its control channel (tcp/21). Once you're between vm1 and vm2 with traffic flowing through you, capturing the `USER ...` and `PASS ...` lines is a Wireshark filter and a *Follow → TCP Stream* away. There's no encryption to break, no hash to crack, no challenge-response to replay. The credentials cross the wire as readable English.\n\nThe same is true of telnet, plain SMTP, HTTP, IMAP, POP3 — most clear-text protocols from the pre-TLS era. Modern stacks favor encrypted alternatives (SFTP, SSH, SMTPS, HTTPS, IMAPS, POP3S) but FTP servers still show up in legacy environments. Recognising what protocols are plaintext on sight is half the skill of being useful inside a compromised LAN.\n\n## What you'll do in the next two levels\n\nLevel 3: get on the path with bidirectional ARP poisoning + IP forwarding, capture vm2's plaintext FTP password.\n\nLevel 4: use the captured credentials to log in to the FTP server yourself and download the flag."
+    },
+    {
       "title": "Capture the password",
       "level_type": "TRAINING_LEVEL",
-      "order": 2,
+      "order": 3,
       "estimated_duration": 25,
       "minimal_possible_solve_time": 5,
       "answer": null,
@@ -82,7 +90,7 @@
     {
       "title": "Read the flag",
       "level_type": "TRAINING_LEVEL",
-      "order": 3,
+      "order": 4,
       "estimated_duration": 10,
       "minimal_possible_solve_time": 2,
       "answer": null,
@@ -121,6 +129,6 @@
       "commands_required": false
     }
   ],
-  "estimated_duration": 40,
+  "estimated_duration": 48,
   "variant_sandboxes": true
 }
