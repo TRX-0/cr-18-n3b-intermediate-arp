@@ -1,0 +1,8 @@
+[Unit]
+Description=One-shot FTP client for the ARP MITM lab
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ftp-client.sh
