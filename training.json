@@ -85,10 +85,10 @@
       "order": 3,
       "estimated_duration": 10,
       "minimal_possible_solve_time": 2,
-      "answer": null,
-      "answer_variable_name": "flag",
-      "content": "You have the password. Now log in to the FTP server yourself and retrieve the flag.\n\nThe flag lives in a file called `flag.txt` in the FTP user's home directory. The captured line will look like `CADMUS{...}`; submit only the value **inside** the braces.\n\nYou may stop the arpspoof processes now if you want; you no longer need the MITM.",
-      "solution": "1. The username you saw on the wire was **${ftp_user}**. Connect to vm1 with a real FTP client:\n\n   `ftp 192.168.25.10`\n\n   It will prompt for a name and password. Use **${ftp_user}** and the password you captured.\n\n2. List the home directory:\n\n   `ls`\n\n   You should see `flag.txt`.\n\n3. Download it:\n\n   `get flag.txt`\n\n   The file lands in your current working directory on vma. Quit with `bye`.\n\n4. Read it:\n\n   `cat flag.txt`\n\n   The contents look like **`CADMUS{${ANSWER}}`**. Submit just **`${ANSWER}`**.",
+      "answer": "CADMUS{${flag}}",
+      "answer_variable_name": null,
+      "content": "You have the password. Now log in to the FTP server yourself and retrieve the flag.\n\nThe flag lives in a file called `flag.txt` in the FTP user's home directory. Submit the **full** flag including the `CADMUS{...}` wrapper.\n\nYou may stop the arpspoof processes now if you want; you no longer need the MITM.",
+      "solution": "1. The username you saw on the wire was **${ftp_user}**. Connect to vm1 with a real FTP client:\n\n   `ftp 192.168.25.10`\n\n   It will prompt for a name and password. Use **${ftp_user}** and the password you captured.\n\n2. List the home directory:\n\n   `ls`\n\n   You should see `flag.txt`.\n\n3. Download it:\n\n   `get flag.txt`\n\n   The file lands in your current working directory on vma. Quit with `bye`.\n\n4. Read it:\n\n   `cat flag.txt`\n\n   The contents are the flag. Submit it as-is, including the `CADMUS{}` wrapper: **`${ANSWER}`**.",
       "solution_penalized": true,
       "hints": [
         {
