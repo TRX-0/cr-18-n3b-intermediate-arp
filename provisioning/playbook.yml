@@ -29,7 +29,7 @@
     - name: Deploy flag file in FTP user's home
       ansible.builtin.copy:
         dest: "{{ flag_file }}"
-        content: "CADMUS{{ '{' }}{{ flag }}{{ '}' }}\n"
+        content: "{{ flag }}\n"
         owner: "{{ ftp_user }}"
         group: "{{ ftp_user }}"
         mode: '0640'

@@ -16,14 +16,14 @@ A single `192.168.25.0/24` segment behind one router with a `10.10.10.0/24` WAN.
 ## Provisioning
 
 `provisioning/playbook.yml` runs three plays:
-- **vm1**: installs vsftpd, creates a local user (`ftp_user`/`ftp_pass` from APG), drops `CADMUS{<flag>}` into the user's home as `flag.txt`, ships a minimal vsftpd.conf with anonymous off and writes disabled.
+- **vm1**: installs vsftpd, creates a local user (`ftp_user`/`ftp_pass` from APG), drops the APG `flag` value into the user's home as `flag.txt`, ships a minimal vsftpd.conf with anonymous off and writes disabled.
 - **vm2**: installs `netcat-openbsd`, deploys an `ftp-client.sh` script that pushes plaintext FTP credentials at vm1, behind a systemd oneshot service triggered every 15 s by a timer.
 - **vma**: provisions `user` / `Password123` (sudo) via the `user-access` role.
 
 APG variables in `variables.yml`:
 - `ftp_user` (type=username) — the local FTP user on vm1
 - `ftp_pass` (type=password, length=12) — captured by the trainee in level 1
-- `flag` (type=password, length=16) — wrapped as `CADMUS{<flag>}` in the file the trainee retrieves in level 2
+- `flag` (type=password, length=16) — written verbatim to the file the trainee retrieves in level 2
 
 ## Trainee workflow
 
@@ -33,7 +33,7 @@ APG variables in `variables.yml`:
 4. `tcpdump -ni eth1 -A 'tcp port 21'` and wait for the next FTP cycle (≤15 s). Read `USER` and `PASS` off the wire.
 5. Submit the password (level 2).
 6. `ftp 192.168.25.10`, log in with the captured creds, `get flag.txt`, `cat flag.txt`.
-7. Submit the value inside the `CADMUS{...}` wrapper (level 3).
+7. Submit the file contents (level 3).
 
 ## Tools used
 
