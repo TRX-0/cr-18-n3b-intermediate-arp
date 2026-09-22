@@ -7,9 +7,9 @@ ftp_user:
 ftp_pass:
     type: password
     length: 12
-    prohibited: ['{', '}', '"', "'", ' ', '\\', '/', ':', '@']
+    prohibited: ['{', '}', '"', "'", ' ', '\', '/', ':', '@']
 
 flag:
     type: password
     length: 16
-    prohibited: ['{', '}', '"', "'", ' ', '\\', '/']
+    prohibited: ['{', '}', '"', "'", ' ', '\', '/']
