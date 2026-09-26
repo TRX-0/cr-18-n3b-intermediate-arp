@@ -54,25 +54,25 @@
         {
           "title": "MITM, not just sniffing",
           "content": "If you only run tcpdump without ARP spoofing first, you will see nothing of vm2's session. It is a unicast between two other machines on the segment. You need to lie about the MAC addresses so the traffic actually traverses you.",
-          "hint_penalty": 10,
+          "hint_penalty": 5,
           "order": 0
         },
         {
           "title": "Spoof both directions",
           "content": "ARP poisoning needs to point both endpoints at you. With `arpspoof`, that is two simultaneous processes (one per direction). `bettercap` is built for victim ↔ gateway MITM, not victim ↔ victim, so its `arp.spoof` won't help you in this scenario — `arpspoof` is the right tool.",
-          "hint_penalty": 20,
+          "hint_penalty": 10,
           "order": 1
         },
         {
           "title": "Don't black-hole the traffic and don't tip off the victim",
           "content": "Without IP forwarding (`sudo sysctl -w net.ipv4.ip_forward=1`), packets arrive at your kernel and stop — session breaks, vm2 retries, you learn nothing. And without `sudo sysctl -w net.ipv4.conf.all.send_redirects=0`, your kernel ICMP-redirects vm2 to go direct because it sees both hosts on the same subnet, which triggers a fresh ARP and unpoisons the cache within seconds. Set both before you start spoofing.",
-          "hint_penalty": 25,
+          "hint_penalty": 13,
           "order": 2
         }
       ],
       "incorrect_answer_limit": 10,
       "attachments": [],
-      "max_score": 100,
+      "max_score": 50,
       "variant_answers": true,
       "reference_solution": [],
       "mitre_techniques": [
@@ -108,19 +108,19 @@
         {
           "title": "Use a real FTP client",
           "content": "The `ftp` command-line tool is the simplest option. It prompts for the username and password, then drops you into a shell where `ls`, `get`, and `bye` work as you'd expect.",
-          "hint_penalty": 10,
+          "hint_penalty": 5,
           "order": 0
         },
         {
           "title": "The flag file is named flag.txt",
           "content": "After logging in, `ls` in the FTP session will show `flag.txt`. Use `get flag.txt` to download it. Read it locally on vma with `cat`.",
-          "hint_penalty": 15,
+          "hint_penalty": 7,
           "order": 1
         }
       ],
       "incorrect_answer_limit": 10,
       "attachments": [],
-      "max_score": 100,
+      "max_score": 50,
       "variant_answers": true,
       "reference_solution": [],
       "mitre_techniques": [
